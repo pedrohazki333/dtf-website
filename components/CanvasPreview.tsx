@@ -1,14 +1,20 @@
 'use client'
-import { useEffect, useRef } from 'react'
-import { fabric } from 'fabric'
+import { useEffect, useRef, useState } from 'react'
+
+type Fabric = typeof import('fabric')
 
 export default function CanvasPreview({ baseImage, design }: { baseImage: string; design?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const canvasObj = useRef<fabric.Canvas | null>(null)
-  const designRef = useRef<fabric.Image>()
+  const canvasObj = useRef<Fabric['Canvas'] | null>(null)
+  const designRef = useRef<Fabric['Image'] | null>(null)
+  const [fabric, setFabric] = useState<Fabric>()
 
   useEffect(() => {
-    if (!canvasRef.current) return
+    import('fabric').then(setFabric)
+  }, [])
+
+  useEffect(() => {
+    if (!fabric || !canvasRef.current) return
     const canvas = new fabric.Canvas(canvasRef.current, {
       width: 400,
       height: 400,
@@ -23,9 +29,10 @@ export default function CanvasPreview({ baseImage, design }: { baseImage: string
     return () => {
       canvas.dispose()
     }
-  }, [baseImage])
+  }, [baseImage, fabric])
 
   useEffect(() => {
+    if (!fabric) return
     const canvas = canvasObj.current
     if (!canvas) return
     if (designRef.current) {
@@ -40,7 +47,7 @@ export default function CanvasPreview({ baseImage, design }: { baseImage: string
         canvas.add(img)
       })
     }
-  }, [design])
+  }, [design, fabric])
 
   return <canvas ref={canvasRef} className="border mx-auto" />
 }
